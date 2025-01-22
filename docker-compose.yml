@@ -1,0 +1,73 @@
+services:
+  frontend:
+    container_name: frontend
+    build:
+      context: ./frontend 
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000" 
+    depends_on:
+      - products_service
+      - user_service
+
+  # Main & Products setup
+  products_service:
+    container_name: products_service
+    build:
+      context: ./main
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/app
+    environment:
+      - PRODUCTS_DB_URI=${PRODUCTS_DB_URI}
+    depends_on:
+      - products_db
+
+  products_db:
+    container_name: products_db
+    image: postgres:15
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    volumes:
+      - products_db_data:/var/lib/postgresql/data
+  
+  # Users setup
+  user_service:
+    container_name: user_service
+    build:
+      context: ./user_service
+      dockerfile: Dockerfile
+    ports:
+      - "5001:5001"
+    volumes:
+      - .:/app
+    environment:
+      - USER_DB_URI=${USER_DB_URI}
+    depends_on:
+      - users_db
+
+  users_db:
+    container_name: users_db
+    image: postgres:15
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_USER=${USERS_DB_USER}
+      - POSTGRES_PASSWORD=${USERS_DB_PASSWORD}
+      - POSTGRES_DB=${USERS_DB_NAME}
+    volumes:
+      - users_db_data:/var/lib/postgresql/data
+  
+volumes:
+  users_db_data: {}
+  products_db_data: {}
+
+    
+
+
