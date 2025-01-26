@@ -1,0 +1,127 @@
+:root {
+    --grey-color: #f1f1f1;
+    --black-color: #20222E;
+    --blue-color: #007bff;
+    --dark-grey-color: #515151;
+    --light-grey-color: #7e7e7e;
+}
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    background-color: var(--grey-color);
+}
+
+a {
+    color: var(--black-color);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+a:hover {
+    color: var(--dark-grey-color);
+}
+
+nav {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.nav-bar-vert {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 40px;
+    background-color: white;
+    border-radius: 25px;
+    flex-direction: row;
+    gap: 15px;
+    padding: 10px;
+    min-width: 720px;
+}
+
+.nav-links {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 25px;
+}
+
+.nav-links li {
+    list-style-type: none;
+}
+
+.hamburger-icon{
+    display: none;
+}
+
+.logo-img {
+    width: auto;
+    height: 32px;
+    margin-left: 15px;
+}
+
+.hero-section {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    margin-top: 25px;
+    text-align: center;
+}
+
+.btn-primary {
+    background-color: var(--blue-color);
+    border: none;
+    border-radius: 25px;
+    font-size: 16px;
+    padding: 12px;
+    color: white;
+    max-height: fit-content;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.btn-primary:hover {
+    background-color: #0063ce;
+}
+
+.sign-up {
+    display: flex;
+    margin-left: auto;
+    align-items: center;
+    gap: 10px;
+}
+
+h3 {
+    color: var(--dark-grey-color);
+    font-weight: normal;
+    margin-top: 0;
+}
+
+@media (max-width: 768px) {
+    .nav-links {
+        display: none;
+    }
+    .hamburger-icon {
+        display: block;
+        cursor: pointer;
+        margin-top: 10px;
+    }
+    .nav-links.opened {
+        display: flex;
+        margin-top: 75px;
+        padding-left: 15px;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .nav-bar-vert {
+        align-items: flex-start;
+        width: 90%;
+        min-width: 0px;
+    }
+    .logo-img {
+        display: none;
+    }
+}
