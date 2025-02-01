@@ -22,15 +22,17 @@ const NavbarVert = () => {
                     /* Hamburger Icon */
                     <path d="M224,128a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16H216A8,8,0,0,1,224,128ZM40,72H216a8,8,0,0,0,0-16H40a8,8,0,0,0,0,16ZM216,184H40a8,8,0,0,0,0,16H216a8,8,0,0,0,0-16Z"></path>
                 )}</svg>
-                <img className="logo-img" src="./src/assets/logowithname.png" alt="Helf Logo"></img>
+                <Link to="/"><img className="logo-img" src="./src/assets/logowithname.png" alt="Helf Logo"></img></Link>
                 <ul className={`nav-links ${menuOpen ? "opened" : ""}`}>
                     <li><Link to="/">Home</Link></li>
                     <li>Products</li>
                     <li><Link to="/about">About</Link></li>
                 </ul>
-                <div className="sign-up">
-                    <p>Log In</p>
-                    <button className="btn-primary signup">Start Now</button>
+                <div className="sign-up-link">
+                    <Link to="log-in">Log In</Link>
+                    <Link to="/sign-up">
+                        <button className="btn-primary signup">Start Now</button>
+                    </Link>
                 </div>
             </div>
         </nav>

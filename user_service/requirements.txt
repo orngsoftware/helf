@@ -5,3 +5,4 @@ werkzeug
 flask_login
 wtforms
 flask_wtf
+flask_cors
