@@ -1,9 +1,5 @@
 flask 
 flask-sqlalchemy
 psycopg2-binary
-werkzeug
-flask_login
-wtforms
-flask_wtf
 flask_cors
 pyjwt

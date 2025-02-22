@@ -1,9 +1,15 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
+
+export const isAuthenticated = () => {
+    const token = localStorage.getItem("token")
+    return !!token
+}
 
 const AuthForm = (props: any) => {
     const {url, formType} = props
-    console.log(formType)
+    const navigate = useNavigate()
 
     const [formData, setFormData] = useState({  
         name: "",
@@ -23,9 +29,9 @@ const AuthForm = (props: any) => {
 
         try {
             // Fetch CSRF token
-            const csrfResponse = await fetch("http://127.0.0.1:5001/get-csrf-token");
-            const csrfData = await csrfResponse.json();
-            const csrfToken = csrfData.csrf_token;
+            const csrfResponse = await fetch("http://127.0.0.1:5001/get-csrf-token")
+            const csrfData = await csrfResponse.json()
+            const csrfToken = csrfData.csrf_token
 
             const requestBody = formType === "register" ? formData : {email: formData.email, password: formData.password}
 
@@ -41,8 +47,10 @@ const AuthForm = (props: any) => {
             const result = await response.json()
 
             if (response.ok) {
-                setMessage(result.message)
+                localStorage.setItem("token", result.token)
+                navigate("/dashboard")
             }
+            setMessage(result.message)
 
         } 
         catch(error) {
