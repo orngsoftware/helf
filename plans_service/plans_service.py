@@ -54,7 +54,7 @@ with app.app_context():
     db.create_all()
 
 
-@app.route("/plans/get-block-data")
+@app.route("/plans/block-data")
 @token_required
 def get_block_data(*args, **kwargs):
     plan_id = request.args.get('plan_id')
@@ -73,17 +73,29 @@ def get_block_data(*args, **kwargs):
 
     return jsonify(response), 200
 
-@app.route('/plans/get-tasks')
+@app.route('/plans/tasks')
 def get_tasks():
-    data = request.get_json()
-    tasks_completed = data.get('Tasks-IDs')
+    tasks_data = request.args.get('tasks')
     plan_id = request.args.get('plan_id')
     day = request.args.get('day')
+    response = []
 
-    result = db.session.execute(db.select(Tasks).where(Tasks.plan_id == plan_id, Tasks.day == day, Tasks.id not in tasks_completed)).scalars().all()
-    return jsonify(result), 200
+    if not tasks_data:
+        result = db.session.execute(db.select(Tasks).where(Tasks.plan_id == plan_id, Tasks.day == day)).scalars().all()
+    else: 
+        tasks_completed = list(map(int, tasks_data.split("t"))) 
+        result = db.session.execute(db.select(Tasks).where(Tasks.plan_id == plan_id, Tasks.day == day, Tasks.id.notin_(tasks_completed))).scalars().all()
+    
+    for task in result:
+        response.append({
+            "task_id": task.id,
+            "name": task.action_name,
+            "description": task.description
+        })
+    
+    return jsonify(response)
 
-@app.route('/plans/get-plans')
+@app.route('/plans')
 def get_plans():
     plan_id = request.args.get('plan_id')
     if not plan_id:

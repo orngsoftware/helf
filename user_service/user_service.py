@@ -131,7 +131,7 @@ def login():
         token = generate_jwt(user)
         return jsonify({"message": "Logged in successfully", "token": token}), 200
 
-@app.route('/users/get-user-plan')
+@app.route('/users/user-plan')
 @token_required
 def get_user_plan(user_id, *args, **kwargs):
     plan_id = request.args.get('plan_id')
@@ -141,22 +141,20 @@ def get_user_plan(user_id, *args, **kwargs):
     if not result: 
         return jsonify({"message": "This user doesn't have this plan"}), 404
     
-    return jsonify({"current_block_num": result.current_block_num, "ids_tasks_completed": result.tasks_completed, "current_day": result.day})
+    return jsonify({"current_block_num": result.current_block_num, "tasks_completed": result.tasks_completed, "current_day": result.day})
 
 @app.route('/users/complete-task', methods=['POST'])
 @token_required
 def complete_task(user_id, *args, **kwargs):
     data = request.get_json()
-    tasks_ids = data["Tasks-IDs"]
-    plan_id = request.args.get('plan_id')
+    task_id = int(data.get('task_id'))
+    plan_id = int(request.args.get('plan_id'))
     plan = db.session.execute(db.select(UserPlans).where(UserPlans.plan_id == plan_id, UserPlans.user_id == user_id)).scalars().first()
 
-    if not tasks_ids: 
-        return jsonify({"message": "No tasks ids provided"}), 401
-    
-    for task_id in tasks_ids:
-        if task_id not in plan.tasks_completed:
-            plan.tasks_completed.append(task_id)
-    
+    if not task_id: 
+        return jsonify({"message": "No task ID provided"}), 401
+
+    plan.tasks_completed = plan.tasks_completed + [task_id]
     db.session.commit()
-    return 200
+
+    return jsonify({"message": "Completed task successfully", "tasks_completed": plan.tasks_completed}), 200
