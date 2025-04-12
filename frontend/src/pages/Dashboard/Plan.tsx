@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import Block from "./Block";
 import PlanInfo from "./PlanInfo";
 import Tasks from "./Tasks";
 
 const Plan = () => {
     const { plan_id } = useParams();
+    const navigate = useNavigate();
     const token = localStorage.getItem("token");
     const request_data = {
         method: "GET",
@@ -16,6 +17,7 @@ const Plan = () => {
     const [allData, setAllData] = useState({
         current_user_day: "",
         current_user_block: "",
+        user_name: "",
         user_tasks_completed: [],
         plan_duration: "",
         plan_name: "",
@@ -33,6 +35,10 @@ const Plan = () => {
             request_data
         );
         const userResponseData = await userAPIResponse.json();
+        if (userAPIResponse.status == 401) {
+            localStorage.removeItem("token")
+            navigate("/log-in")
+        }
 
         // 2. Fetch Plan data
         const planAPIResponse = await fetch(
@@ -51,7 +57,7 @@ const Plan = () => {
         const userCompletedTasks = userResponseData.tasks_completed.join("t");
         const tasks_query = userCompletedTasks ? `&tasks=${userCompletedTasks}` : "";
         const tasksAPIResponse = await fetch(
-            `http://127.0.0.1:5002/plans/tasks?plan_id=${plan_id}&day=1${tasks_query}`,
+            `http://127.0.0.1:5002/plans/tasks?plan_id=${plan_id}&day=1${tasks_query}`, // Change day=1 to day={user.current_day} on real data
             {
                 headers: {
                     "Content-Type": "application/json"
@@ -63,6 +69,7 @@ const Plan = () => {
         return ({
             current_user_day: userResponseData.current_day,
             current_user_block: userResponseData.current_block_num,
+            user_name: userResponseData.user_name,
             user_tasks_completed: userResponseData.tasks_completed,
             plan_duration: planResponseData.plan_duration,
             plan_name: planResponseData.plan_name,
@@ -87,8 +94,9 @@ const Plan = () => {
 
     if (allData.current_user_block) {
         return (
-            <div className="section-row">
-                <div>
+            <div className="plan-section">
+                <div className="section-column">
+                    <h1><span style={{fontWeight: "lighter"}}>Hello,</span> {allData.user_name}.</h1>
                     <PlanInfo
                         userDay={allData.current_user_day}
                         planName={allData.plan_name}

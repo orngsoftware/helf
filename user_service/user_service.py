@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy import Integer, String, Boolean, DateTime, ForeignKey, ARRAY
+from sqlalchemy import Integer, String, Boolean, Date, ForeignKey, ARRAY
 from flask_wtf.csrf import generate_csrf
 from werkzeug.security import generate_password_hash, check_password_hash
 from user_service.token_required import token_required
@@ -17,6 +17,8 @@ SECRET_KEY = os.environ.get('SECRET_KEY')
 app.config['SECRET_KEY'] = SECRET_KEY
 CORS(app)
 
+todays_date = datetime.date.today()
+
 class Base(DeclarativeBase):
     pass
 db = SQLAlchemy(model_class=Base)
@@ -31,18 +33,20 @@ class Users(db.Model):
     email: Mapped[str]= mapped_column(String(250), nullable=False, unique=True)
     password: Mapped[str] = mapped_column(String, nullable=False)
     paid_plan: Mapped[bool] = mapped_column(Boolean)
-    last_completed_date: Mapped[datetime.datetime] = mapped_column(DateTime, default=datetime.datetime.now(datetime.timezone.utc).date())
+    last_completed_date: Mapped[datetime.date] = mapped_column(Date, default=todays_date)
     plans = relationship("UserPlans", back_populates="user")
     streak: Mapped[int] = mapped_column(Integer, nullable=True)
-    to_dos_completed: Mapped[int] = mapped_column(Integer, nullable=True) # How many tasks user completed in general.
+    num_tasks_completed: Mapped[int] = mapped_column(Integer, nullable=True, default=0) # How many tasks user completed in general.
+    num_tasks_incomplete: Mapped[int] = mapped_column(Integer, nullable=True, default=0)
+    reasons_for_tasks_incomplete: Mapped[list] = mapped_column(ARRAY(String), default=[])
 
 class UserPlans(db.Model):
     __tablename__="user_plans"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     plan_id: Mapped[list] = mapped_column(Integer, nullable=True)
     current_block_num: Mapped[int] = mapped_column(Integer, nullable=True) # What block user is on.
-    day: Mapped[int] = mapped_column(Integer, nullable=True) # What day user is into the plan.
     tasks_completed: Mapped[list] = mapped_column(ARRAY(Integer), default=[]) # What tasks user has completed for the plan.
+    start_date: Mapped[datetime.date] = mapped_column(Date, nullable=True)
 
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))
     user = relationship("Users", back_populates="plans")
@@ -65,7 +69,7 @@ def generate_jwt(user):
 
 def create_streak(last_completed_date, streak):
     """Determines current streak of the user"""
-    today = datetime.datetime.now(datetime.timezone.utc).date()
+    today = todays_date
 
     if not last_completed_date: 
         last_completed_date = today
@@ -91,8 +95,6 @@ def register():
     name = data.get("name")
     email = data.get("email")
     password = data.get("password")
-
-    print(data)
 
     result = db.session.execute(db.select(Users).where(Users.email == email))
     if result.scalar(): 
@@ -133,15 +135,39 @@ def login():
 
 @app.route('/users/user-plan')
 @token_required
-def get_user_plan(user_id, *args, **kwargs):
+def get_user_plan(user_id, name, *args, **kwargs):
     plan_id = request.args.get('plan_id')
     if not plan_id: 
         return jsonify({"message": "Plan id is not provided"}), 401
     result = db.session.execute(db.select(UserPlans).where(UserPlans.plan_id == plan_id, UserPlans.user_id == user_id)).scalars().first()
+    current_day = (todays_date - result.start_date).days
+
     if not result: 
         return jsonify({"message": "This user doesn't have this plan"}), 404
     
-    return jsonify({"current_block_num": result.current_block_num, "tasks_completed": result.tasks_completed, "current_day": result.day})
+    return jsonify({"current_block_num": result.current_block_num, "tasks_completed": result.tasks_completed, "current_day": 1 if current_day == 0 else current_day, "user_name": name})
+
+@app.route('/users/start-plan', methods=['POST'])
+@token_required
+def start_plan(user_id, *args, **kwargs):
+    plan_id = request.args.get('plan_id')
+
+    result = db.session.execute(db.select(UserPlans).where(UserPlans.plan_id == plan_id, UserPlans.user_id == user_id)).scalars().first()
+    if result: 
+        return jsonify({"message": "User already has this plan"}), 401
+
+    new_user_plan = UserPlans(
+        plan_id = plan_id,
+        current_block_num = 1,
+        start_date = todays_date,
+        user_id = user_id
+    )
+
+    db.session.add(new_user_plan)
+    db.session.commit()
+
+    return jsonify({"message": "Started the plan successfully"}), 200
+    
 
 @app.route('/users/complete-task', methods=['POST'])
 @token_required
@@ -149,12 +175,62 @@ def complete_task(user_id, *args, **kwargs):
     data = request.get_json()
     task_id = int(data.get('task_id'))
     plan_id = int(request.args.get('plan_id'))
+    user = db.session.execute(db.select(Users).where(Users.id == user_id)).scalar()
     plan = db.session.execute(db.select(UserPlans).where(UserPlans.plan_id == plan_id, UserPlans.user_id == user_id)).scalars().first()
 
     if not task_id: 
         return jsonify({"message": "No task ID provided"}), 401
 
     plan.tasks_completed = plan.tasks_completed + [task_id]
+    user.num_tasks_completed += 1
+    user.last_completed_date = todays_date
+
     db.session.commit()
 
     return jsonify({"message": "Completed task successfully", "tasks_completed": plan.tasks_completed}), 200
+
+@app.route('/users/incomplete-task', methods=['POST'])
+@token_required
+def incomplete_task(user_id, *args, **kwargs):
+    data = request.get_json()
+    reason = data.get('reason')
+    user = db.session.execute(db.select(Users).where(Users.id == user_id)).scalar()
+
+    if not user:
+        return jsonify({"message": "User wasn't found"}), 404
+
+    user.reasons_for_tasks_incomplete = user.reasons_for_tasks_incomplete + [reason]
+    user.num_tasks_incomplete += 1
+
+    db.session.commit()
+
+    return jsonify({"message": "Successfully incompleted the task"}), 200
+
+@app.route('/users/stats', methods=['GET'])
+@token_required
+def get_stats(user_id, *args, **kwargs):
+    """Get 1. How many tasks user hasn't completed, 
+        2. How many tasks user has completed, 
+        3. Frequancies of reasons for not completing tasks in precents.
+    """
+
+    user = db.session.execute(db.select(Users).where(Users.id == user_id)).scalar()
+
+    if not user:
+        return jsonify({"message": "User wasn't found"}), 404
+    
+    reasons_arr = user.reasons_for_tasks_incomplete
+
+    if not reasons_arr:
+        return jsonify({"message": "No data exists for this user"}), 204
+
+    reasons = {
+        "b": reasons_arr.count("b") / len(reasons_arr),
+        "ned": reasons_arr.count("ned") / len(reasons_arr),
+        "dht": reasons_arr.count("dht") / len(reasons_arr),
+        "th": reasons_arr.count("th") / len(reasons_arr),
+        "Other": reasons_arr.count("Other") / len(reasons_arr)
+    }
+    
+    return jsonify({"non_completed_tasks": user.num_tasks_incomplete if user.num_tasks_incomplete else 0, "completed_tasks": user.num_tasks_completed if user.num_tasks_completed else 0, "reasons_with_percents": reasons}), 200
+    

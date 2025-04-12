@@ -1,0 +1,104 @@
+import { useEffect, useState } from "react"
+import { BarChart, Bar, Legend, ResponsiveContainer, PieChart, Pie, Tooltip, Cell} from "recharts"
+
+const CustomLegend = () => (
+    <div style={{display: "flex", marginTop: 25 , justifyContent: "center"}}>
+      <span style={{ color: "#BBE633", marginRight: 15 }}>Completed</span>
+      <span style={{ color: "#FF0800" }}>Incompleted</span>
+    </div>
+);
+
+const COLORS = ["#6CB4EE","#007bff", "#00B9E8", "#318CE7", "#7BAFD4"]
+
+
+const TasksCompletionStats = () => {
+    const [barData, setBarData] = useState([{}])
+    const [reasonsData, setReasonsData] = useState([{}])
+
+    const fetchData = async () => {
+        const userStatsAPIResponse = await fetch(
+            "http://127.0.0.1:5001/users/stats", {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${localStorage.getItem("token")}`
+                }
+            }
+        )
+        const responseData = await userStatsAPIResponse.json()
+        setBarData([
+            {
+                "name": "Task completetions",
+                "Incompleted": responseData.non_completed_tasks,
+                "Completed": responseData.completed_tasks
+            }
+        ])
+        setReasonsData([
+            {
+                "name": "Boring",
+                "value": responseData.reasons_with_percents["b"]
+            },
+            {
+                "name": "Other",
+                "value": responseData.reasons_with_percents["Other"]
+            },
+            {
+                "name": "Didn't have time",
+                "value": responseData.reasons_with_percents["dht"]
+            },
+            {
+                "name": "Discipline issues",
+                "value": responseData.reasons_with_percents["ned"]
+            },
+            {
+                "name": "Too hard",
+                "value": responseData.reasons_with_percents["th"]
+            }
+        ])
+    }
+
+    useEffect(() => {
+        fetchData()
+    }, [])
+
+    return (
+        <div className="plan-section" style={{marginTop: 50}}>
+            <div className="white-card stats">
+                <h3 className="sm-heading">Task Completion</h3>
+                <ResponsiveContainer width="99%" height={250}>
+                    <BarChart data={barData} barSize={100} barGap={50} margin={{top: 25}} >
+                        <Bar dataKey="Completed" fill="#BBE633" label={{ fill: "#20222E"}} isAnimationActive={false} radius={[15, 15, 0, 0]} />
+                        <Bar dataKey="Incompleted" fill="#FF0800" label={{ fill: "white"}} isAnimationActive={false} radius={[15, 15, 0, 0]} />
+                        <Legend content={<CustomLegend />}/>
+                    </BarChart>
+                </ResponsiveContainer>
+            </div>
+            <div className="white-card stats">
+                <h3 className="sm-heading">Reasons for incompletion</h3>
+                <ResponsiveContainer width="99%" height={250}>
+                    <PieChart margin={{bottom: 15}}>
+                    <Pie 
+                        data={reasonsData}
+                        dataKey="value" 
+                        nameKey="name" 
+                        cx="50%" 
+                        cy="50%" 
+                        outerRadius={80} 
+                        fill="#007bff" 
+                        label
+                    >{
+                        reasonsData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index]}/>
+                        )
+                    )
+                    }</Pie>
+                    <Tooltip /> 
+                    <Legend verticalAlign="bottom" height={36} /> // optional
+                    </PieChart>
+                </ResponsiveContainer>
+            </div>
+        </div>
+    )
+}
+
+export default TasksCompletionStats;

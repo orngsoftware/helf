@@ -7,9 +7,9 @@ import LoginForm from './pages/Landing/Login';
 import { isAuthenticated } from './components/Auth';
 import LandingLayout from './layouts/LandingLayout';
 import DashboardLayout from './layouts/DashboardLayout';
-import AllPlans from './pages/Dashboard/AllPlans';
-import Dashboard from './pages/Dashboard/Dashboard';
 import Plan from './pages/Dashboard/Plan';
+import StartPlan from './pages/Dashboard/Start';
+import BarTasksCompletion from './pages/Dashboard/Stats';
 
 const AppRoutes = () => {
     return (
@@ -22,9 +22,9 @@ const AppRoutes = () => {
             </Route>
 
             <Route element={isAuthenticated() ? <DashboardLayout /> : <Navigate to="/log-in" />}>
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/dashboard/all-plans" element={<AllPlans />}/>
                 <Route path="/dashboard/plan/:plan_id" element={<Plan />} />
+                <Route path="/start" element={<StartPlan />} />
+                <Route path="/dashboard/stats" element={<BarTasksCompletion />} />
             </Route>
         </Routes>
     )
