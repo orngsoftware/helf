@@ -19,6 +19,9 @@ const Plan = () => {
         current_user_block: "",
         user_name: "",
         user_tasks_completed: [],
+        user_streak: "",
+        longest_streak: "",
+        streak_update_result: "",
         plan_duration: "",
         plan_name: "",
         block_name: "",
@@ -28,12 +31,24 @@ const Plan = () => {
         tasks: []
     })
 
+    const [streakUpdated, setStreakUpdated] = useState(false)
+    const tasksHandleCallback = (tasksData: boolean) => {
+        setStreakUpdated(tasksData)
+    }
+
     const fetchData = async () => {
         // 1. Fetch User data
         const userAPIResponse = await fetch(
             `http://127.0.0.1:5001/users/user-plan?plan_id=${plan_id}`,
             request_data
         );
+        const streakAPIReposnse = await fetch(
+            'http://127.0.0.1:5001/users/stats/streak',
+            request_data 
+        )
+
+        const streakReponseData = await streakAPIReposnse.json();
+
         const userResponseData = await userAPIResponse.json();
         if (userAPIResponse.status == 401) {
             localStorage.removeItem("token")
@@ -71,6 +86,9 @@ const Plan = () => {
             current_user_block: userResponseData.current_block_num,
             user_name: userResponseData.user_name,
             user_tasks_completed: userResponseData.tasks_completed,
+            user_streak: streakReponseData.streak,
+            longest_streak: streakReponseData.longest_streak,
+            streak_update_result: streakReponseData.result,
             plan_duration: planResponseData.plan_duration,
             plan_name: planResponseData.plan_name,
             block_name: blockResponseData.block_name,
@@ -88,7 +106,7 @@ const Plan = () => {
 
         }
         getData()
-    }, [plan_id]);
+    }, [plan_id, streakUpdated]);
 
     console.log("SHFEUHGUEH", allData)
 
@@ -101,6 +119,8 @@ const Plan = () => {
                         userDay={allData.current_user_day}
                         planName={allData.plan_name}
                         planDuration={allData.plan_duration}
+                        userStreak={allData.user_streak}
+                        streakUpdate={allData.streak_update_result}
                     />
                     <Block
                         blockName={allData.block_name}
@@ -109,7 +129,7 @@ const Plan = () => {
                         timeInfo={allData.time_info}
                     />
                 </div>
-                <Tasks tasks={allData.tasks} planID={plan_id}/>
+                <Tasks tasks={allData.tasks} planID={plan_id} planCallback={tasksHandleCallback} />
             </div>
         )
     }

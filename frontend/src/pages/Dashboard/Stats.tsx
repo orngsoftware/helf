@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { BarChart, Bar, Legend, ResponsiveContainer, PieChart, Pie, Tooltip, Cell} from "recharts"
+import { Lightning, Cloud } from "@phosphor-icons/react";
 
 const CustomLegend = () => (
     <div style={{display: "flex", marginTop: 25 , justifyContent: "center"}}>
@@ -14,6 +15,12 @@ const COLORS = ["#6CB4EE","#007bff", "#00B9E8", "#318CE7", "#7BAFD4"]
 const TasksCompletionStats = () => {
     const [barData, setBarData] = useState([{}])
     const [reasonsData, setReasonsData] = useState([{}])
+    const [streakData, setStreakData] = useState({
+        "streak": "",
+        "longest_streak": "",
+        "result": ""
+    })
+    const [color, setColor] = useState({"color": "#7e7e7e", "show-icon": false})
 
     const fetchData = async () => {
         const userStatsAPIResponse = await fetch(
@@ -26,6 +33,23 @@ const TasksCompletionStats = () => {
             }
         )
         const responseData = await userStatsAPIResponse.json()
+
+        const streakAPIResponse = await fetch(
+            "http://127.0.0.1:5001/users/stats/streak", {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${localStorage.getItem("token")}`
+                }
+            }
+        )
+        const streakResponseData = await streakAPIResponse.json()
+
+        setStreakData(streakResponseData)
+        if (streakResponseData.result == 1) {
+            setColor({"color":"#FFBF00", "show-icon": true})
+        }
+
         setBarData([
             {
                 "name": "Task completetions",
@@ -96,6 +120,17 @@ const TasksCompletionStats = () => {
                     <Legend verticalAlign="bottom" height={36} /> // optional
                     </PieChart>
                 </ResponsiveContainer>
+            </div>
+            <div className="white-card">
+                <div className="sm-row" style={{color: color.color}}>
+                    <h3 className="light-text" style={{marginRight: 10}}>Current streak:</h3>
+                    {color["show-icon"] ? <Lightning weight="bold" className="nav-icon"/> : <Cloud weight="bold" className="nav-icon" />}
+                    <h3 className="sm-heading" style={{color: "inherit", marginLeft: 2}}>{streakData.streak}</h3>
+                </div>
+                <div className="sm-row">
+                    <h3 className="light-text" style={{marginRight: 10}}>Longest streak:</h3>
+                    <h3 className="sm-heading" style={{color: "var(--black-color)", marginLeft: 2}}>{streakData.longest_streak}</h3>
+                </div>
             </div>
         </div>
     )

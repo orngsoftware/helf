@@ -95,7 +95,10 @@ const Tasks = (props: any) => {
             body: JSON.stringify({"task_id": task_id})
         })
         const result = await response.json()
-        console.log(result) // here in the future something will change, like when user completes task screen goes green, streak increases and etc.
+        console.log(result) // here in the future something will change, like when user completes a task screen goes green.
+        if (result.streak_change == 1) {
+            props.planCallback(true)
+        }
 
         setTasks((prevTasks: any) => prevTasks.filter((task: any) => task.task_id !== task_id))
     }

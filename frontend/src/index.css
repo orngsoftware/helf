@@ -12,6 +12,10 @@ body {
     margin: 0;
 }
 
+html {
+    scroll-behavior: smooth;
+}
+
 p {
     margin: 5px;
 }
@@ -413,6 +417,7 @@ h3 {
 
     .plan-section {
         gap: 10px;
+        padding-bottom: 120px;
     }
 
     .tasks-section {

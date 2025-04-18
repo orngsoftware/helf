@@ -34,8 +34,10 @@ class Users(db.Model):
     password: Mapped[str] = mapped_column(String, nullable=False)
     paid_plan: Mapped[bool] = mapped_column(Boolean)
     last_completed_date: Mapped[datetime.date] = mapped_column(Date, default=todays_date)
+    last_streak_update: Mapped[datetime.date] = mapped_column(Date, default=todays_date - datetime.timedelta(days=1))
     plans = relationship("UserPlans", back_populates="user")
-    streak: Mapped[int] = mapped_column(Integer, nullable=True)
+    streak: Mapped[int] = mapped_column(Integer, nullable=True, default=0)
+    longest_streak: Mapped[int] = mapped_column(Integer, nullable=True, default=0)
     num_tasks_completed: Mapped[int] = mapped_column(Integer, nullable=True, default=0) # How many tasks user completed in general.
     num_tasks_incomplete: Mapped[int] = mapped_column(Integer, nullable=True, default=0)
     reasons_for_tasks_incomplete: Mapped[list] = mapped_column(ARRAY(String), default=[])
@@ -56,7 +58,7 @@ with app.app_context():
     db.create_all()
 
 
-def generate_jwt(user):
+def generate_jwt(user) -> str:
     """Generate a JWT token for a user"""
     payload = {
         "user_id": user.id,
@@ -67,23 +69,24 @@ def generate_jwt(user):
     token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")
     return token
 
-def create_streak(last_completed_date, streak):
-    """Determines current streak of the user"""
-    today = todays_date
+def calculate_streak(last_completed_date, streak, longest_streak, last_streak_update) -> tuple:
+    """Determines user's streak.
+    Last value in an output tuple shows whether streak was kept (1) or not (0).
+    """
 
-    if not last_completed_date: 
-        last_completed_date = today
-        streak = 1
+    if last_completed_date == todays_date:
+        if last_streak_update != todays_date:
+            streak = streak + 1
+            last_completed_date = last_streak_update = todays_date
+            if streak > longest_streak:
+                longest_streak = streak
+        return (streak, longest_streak, last_streak_update, 1)
+    
+    elif last_completed_date == todays_date - datetime.timedelta(days=1):
+        return (streak, longest_streak, last_streak_update, 0)
     else:
-        if last_completed_date == today: 
-            streak += 1
-        elif last_completed_date == today - datetime.timedelta(days=1): 
-            return streak
-        else: 
-            streak = 0
-    return streak
-
-
+        return (0, longest_streak, last_streak_update, 0)
+    
 # Routes
 @app.route('/get-csrf-token')
 def get_csrf_token():
@@ -183,11 +186,18 @@ def complete_task(user_id, *args, **kwargs):
 
     plan.tasks_completed = plan.tasks_completed + [task_id]
     user.num_tasks_completed += 1
+
+    # Update user's streak
     user.last_completed_date = todays_date
+    updated_streak = calculate_streak(user.last_completed_date, user.streak, user.longest_streak, user.last_streak_update)
+    user.streak = updated_streak[0]
+    user.longest_streak = updated_streak[1]
+    user.last_streak_update = updated_streak[2]
 
     db.session.commit()
 
-    return jsonify({"message": "Completed task successfully", "tasks_completed": plan.tasks_completed}), 200
+    return jsonify({"message": "Completed task and updated the streak successfully.", 
+                    "tasks_completed": plan.tasks_completed, "streak_change": updated_streak[-1]}), 200
 
 @app.route('/users/incomplete-task', methods=['POST'])
 @token_required
@@ -221,16 +231,31 @@ def get_stats(user_id, *args, **kwargs):
     
     reasons_arr = user.reasons_for_tasks_incomplete
 
-    if not reasons_arr:
-        return jsonify({"message": "No data exists for this user"}), 204
-
-    reasons = {
-        "b": reasons_arr.count("b") / len(reasons_arr),
-        "ned": reasons_arr.count("ned") / len(reasons_arr),
-        "dht": reasons_arr.count("dht") / len(reasons_arr),
-        "th": reasons_arr.count("th") / len(reasons_arr),
-        "Other": reasons_arr.count("Other") / len(reasons_arr)
-    }
+    if reasons_arr:
+        reasons = {
+            "b": reasons_arr.count("b") / len(reasons_arr),
+            "ned": reasons_arr.count("ned") / len(reasons_arr),
+            "dht": reasons_arr.count("dht") / len(reasons_arr),
+            "th": reasons_arr.count("th") / len(reasons_arr),
+            "Other": reasons_arr.count("Other") / len(reasons_arr)
+        }
+    else: 
+        reasons = []
     
     return jsonify({"non_completed_tasks": user.num_tasks_incomplete if user.num_tasks_incomplete else 0, "completed_tasks": user.num_tasks_completed if user.num_tasks_completed else 0, "reasons_with_percents": reasons}), 200
     
+@app.route('/users/stats/streak', methods=['GET'])
+@token_required
+def get_streak(user_id, *args, **kwargs):
+    """Get current streak, longest streak of a user and whether it is kept or not."""
+    user = db.session.execute(db.select(Users).where(Users.id == user_id)).scalar()
+    if not user:
+        return jsonify({"message": "User wasn't found"}), 404
+
+    db.session.commit()
+
+    return jsonify({
+        "streak": user.streak,
+        "longest_streak": user.longest_streak,
+        "result": 1 if user.last_streak_update == todays_date else 0
+    })
