@@ -92,7 +92,7 @@ def calculate_streak(last_completed_date, streak, longest_streak, last_streak_up
 def get_csrf_token():
     return jsonify({"csrf_token": generate_csrf()})
     
-@app.route('/users/register', methods=['POST'])
+@app.route('/register', methods=['POST'])
 def register():
     data = request.get_json()
     name = data.get("name")
@@ -120,7 +120,7 @@ def register():
 
     return jsonify({"message": "Registred successfully", "token": generate_jwt(new_user)}), 201
 
-@app.route('/users/login', methods=['POST'])
+@app.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
     email = data.get("email")
@@ -136,7 +136,7 @@ def login():
         token = generate_jwt(user)
         return jsonify({"message": "Logged in successfully", "token": token}), 200
 
-@app.route('/users/user-plan')
+@app.route('/user-plan')
 @token_required
 def get_user_plan(user_id, name, *args, **kwargs):
     plan_id = request.args.get('plan_id')
@@ -150,7 +150,7 @@ def get_user_plan(user_id, name, *args, **kwargs):
     
     return jsonify({"current_block_num": result.current_block_num, "tasks_completed": result.tasks_completed, "current_day": 1 if current_day == 0 else current_day, "user_name": name})
 
-@app.route('/users/start-plan', methods=['POST'])
+@app.route('/start-plan', methods=['POST'])
 @token_required
 def start_plan(user_id, *args, **kwargs):
     plan_id = request.args.get('plan_id')
@@ -172,7 +172,7 @@ def start_plan(user_id, *args, **kwargs):
     return jsonify({"message": "Started the plan successfully"}), 200
     
 
-@app.route('/users/complete-task', methods=['POST'])
+@app.route('/complete-task', methods=['POST'])
 @token_required
 def complete_task(user_id, *args, **kwargs):
     data = request.get_json()
@@ -199,7 +199,7 @@ def complete_task(user_id, *args, **kwargs):
     return jsonify({"message": "Completed task and updated the streak successfully.", 
                     "tasks_completed": plan.tasks_completed, "streak_change": updated_streak[-1]}), 200
 
-@app.route('/users/incomplete-task', methods=['POST'])
+@app.route('/incomplete-task', methods=['POST'])
 @token_required
 def incomplete_task(user_id, *args, **kwargs):
     data = request.get_json()
@@ -216,7 +216,7 @@ def incomplete_task(user_id, *args, **kwargs):
 
     return jsonify({"message": "Successfully incompleted the task"}), 200
 
-@app.route('/users/stats', methods=['GET'])
+@app.route('/stats', methods=['GET'])
 @token_required
 def get_stats(user_id, *args, **kwargs):
     """Get 1. How many tasks user hasn't completed, 
@@ -244,7 +244,7 @@ def get_stats(user_id, *args, **kwargs):
     
     return jsonify({"non_completed_tasks": user.num_tasks_incomplete if user.num_tasks_incomplete else 0, "completed_tasks": user.num_tasks_completed if user.num_tasks_completed else 0, "reasons_with_percents": reasons}), 200
     
-@app.route('/users/stats/streak', methods=['GET'])
+@app.route('/stats/streak', methods=['GET'])
 @token_required
 def get_streak(user_id, *args, **kwargs):
     """Get current streak, longest streak of a user and whether it is kept or not."""

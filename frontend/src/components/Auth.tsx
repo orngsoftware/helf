@@ -28,7 +28,7 @@ const AuthForm = (props: any) => {
 
         try {
             // Fetch CSRF token
-            const csrfResponse = await fetch("http://127.0.0.1:5001/get-csrf-token")
+            const csrfResponse = await fetch("http://localhost/api/users/get-csrf-token")
             const csrfData = await csrfResponse.json()
             const csrfToken = csrfData.csrf_token
 

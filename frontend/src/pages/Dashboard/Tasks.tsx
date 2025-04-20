@@ -25,11 +25,11 @@ const TaskReflection = (props: any) => {
     const handleSumbit = async (e: any) => {
         e.preventDefault()
 
-        const csrfResponse = await fetch("http://127.0.0.1:5001/get-csrf-token")
+        const csrfResponse = await fetch("http://localhost/api/users/get-csrf-token")
         const csrfData = await csrfResponse.json()
         const csrfToken = csrfData.csrf_token
 
-        const response = await fetch("http://127.0.0.1:5001/users/incomplete-task", {
+        const response = await fetch("http://localhost/api/users/incomplete-task", {
             method: 'POST',
             headers: {
                 "Content-Type": "application/json",
@@ -86,7 +86,7 @@ const Tasks = (props: any) => {
         setOpen(!isOpen)
     }
     async function completeTask(task_id: any, plan_id: any) {
-        const response = await fetch(`http://127.0.0.1:5001/users/complete-task?plan_id=${plan_id}`, {
+        const response = await fetch(`http://localhost/api/users/complete-task?plan_id=${plan_id}`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",

@@ -24,7 +24,7 @@ const TasksCompletionStats = () => {
 
     const fetchData = async () => {
         const userStatsAPIResponse = await fetch(
-            "http://127.0.0.1:5001/users/stats", {
+            "http://localhost/api/users/stats", {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
@@ -35,7 +35,7 @@ const TasksCompletionStats = () => {
         const responseData = await userStatsAPIResponse.json()
 
         const streakAPIResponse = await fetch(
-            "http://127.0.0.1:5001/users/stats/streak", {
+            "http://localhost/api/users/stats/streak", {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",

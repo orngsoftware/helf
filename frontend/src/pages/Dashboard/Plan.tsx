@@ -39,11 +39,11 @@ const Plan = () => {
     const fetchData = async () => {
         // 1. Fetch User data
         const userAPIResponse = await fetch(
-            `http://127.0.0.1:5001/users/user-plan?plan_id=${plan_id}`,
+            `http://localhost/api/users/user-plan?plan_id=${plan_id}`,
             request_data
         );
         const streakAPIReposnse = await fetch(
-            'http://127.0.0.1:5001/users/stats/streak',
+            'http://localhost/api/users/stats/streak',
             request_data 
         )
 
@@ -57,13 +57,13 @@ const Plan = () => {
 
         // 2. Fetch Plan data
         const planAPIResponse = await fetch(
-            `http://127.0.0.1:5002/plans?plan_id=${plan_id}`
+            `http://localhost/api/plans?plan_id=${plan_id}`
         );
         const planResponseData = await planAPIResponse.json();
 
         // 3. Fetch Block data
         const blockAPIResponse = await fetch(
-            `http://127.0.0.1:5002/plans/block-data?plan_id=${plan_id}&block_id=${userResponseData.current_block_num}`,
+            `http://localhost/api/plans/block-data?plan_id=${plan_id}&block_id=${userResponseData.current_block_num}`,
             request_data
         );
         const blockResponseData = await blockAPIResponse.json();
@@ -72,7 +72,7 @@ const Plan = () => {
         const userCompletedTasks = userResponseData.tasks_completed.join("t");
         const tasks_query = userCompletedTasks ? `&tasks=${userCompletedTasks}` : "";
         const tasksAPIResponse = await fetch(
-            `http://127.0.0.1:5002/plans/tasks?plan_id=${plan_id}&day=1${tasks_query}`, // Change day=1 to day={user.current_day} on real data
+            `http://localhost/api/plans/tasks?plan_id=${plan_id}&day=1${tasks_query}`, // Change day=1 to day={user.current_day} on real data
             {
                 headers: {
                     "Content-Type": "application/json"

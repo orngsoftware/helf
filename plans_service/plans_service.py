@@ -54,7 +54,7 @@ with app.app_context():
     db.create_all()
 
 
-@app.route("/plans/block-data")
+@app.route("/block-data")
 @token_required
 def get_block_data(*args, **kwargs):
     plan_id = request.args.get('plan_id')
@@ -64,16 +64,17 @@ def get_block_data(*args, **kwargs):
     
     if not result: return jsonify({"message": "Block not found"}), 404
 
-    response = {
+    response = make_response(jsonify({
         "block_name": result.name,
         "tldr_info": result.tldr_info,
         "body_info": result.body_info,
         "time_info": result.time_info
-    }
+    }), 200)
+    response.headers['Cache-Control'] = "max-age=604800, private, must-revalidate"
 
-    return jsonify(response), 200
+    return response
 
-@app.route('/plans/tasks')
+@app.route('/tasks')
 def get_tasks():
     tasks_data = request.args.get('tasks')
     plan_id = request.args.get('plan_id')
@@ -95,7 +96,7 @@ def get_tasks():
     
     return jsonify(response)
 
-@app.route('/plans')
+@app.route('/')
 def get_plans():
     plan_id = request.args.get('plan_id')
     if not plan_id:
@@ -103,8 +104,12 @@ def get_plans():
         return jsonify(result), 200
     else:
         result = db.session.execute(db.select(Plans).where(Plans.id == plan_id)).scalars().first()
-        return jsonify({
+        response = make_response(jsonify({
             "plan_duration": result.duration,
             "plan_name": result.name
-        }), 200
+        }), 200)
+
+        response.headers['Cache-Control'] = "max_age=2628000, private"
+
+        return response
     

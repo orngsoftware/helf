@@ -9,7 +9,7 @@ const StartPlan = () => {
     const handleSumbit = async (e: any) => {
         const token = localStorage.getItem('token')
         e.preventDefault()
-        const apiResponse = await fetch("http://127.0.0.1:5001/users/start-plan?plan_id=1", {
+        const apiResponse = await fetch("http://localhost/api/users/start-plan?plan_id=1", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
