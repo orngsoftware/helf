@@ -29,7 +29,7 @@ const NavbarHoriz = () => {
                     <li><Link to="/about">About</Link></li>
                 </ul>
                 <div className="sign-up-link">
-                    <Link to="log-in">Log In</Link>
+                    <Link to="/dashboard/plan/1">Log In</Link>
                     <Link to="/sign-up">
                         <button className="btn-primary signup">Start Now</button>
                     </Link>

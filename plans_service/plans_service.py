@@ -1,10 +1,11 @@
 from flask import Flask, jsonify, request, make_response
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase, mapped_column, Mapped, relationship
-from sqlalchemy import ForeignKey, String, Integer, Text
+from sqlalchemy import ForeignKey, String, Integer, Text, ARRAY, and_
 from flask_cors import CORS
 from user_service.token_required import token_required
 import os
+from markdown import markdown
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('PLANS_DB_URI')
@@ -33,6 +34,7 @@ class Blocks(db.Model):
 
     plan_id: Mapped[int] = mapped_column(Integer, ForeignKey("plans.id"))
     plan = relationship("Plans", back_populates="blocks")
+    day: Mapped[int] = mapped_column(Integer)
 
     name: Mapped[str] = mapped_column(String, nullable=False)
     tldr_info: Mapped[str] = mapped_column(Text, nullable=False)
@@ -44,8 +46,8 @@ class Tasks(db.Model):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     action_name: Mapped[str] = mapped_column(String, nullable=False)
     description: Mapped[str] = mapped_column(String)
-    day: Mapped[int] = mapped_column(Integer)
-    difficulty: Mapped[int] = mapped_column(Integer) 
+    days: Mapped[list] = mapped_column(ARRAY(Integer), default=[])
+    difficulty: Mapped[int] = mapped_column(Integer)
 
     plan_id: Mapped[int] = mapped_column(Integer, ForeignKey("plans.id"))
     plan = relationship("Plans", back_populates="tasks")
@@ -67,7 +69,7 @@ def get_block_data(*args, **kwargs):
     response = make_response(jsonify({
         "block_name": result.name,
         "tldr_info": result.tldr_info,
-        "body_info": result.body_info,
+        "body_info": markdown(result.body_info),
         "time_info": result.time_info
     }), 200)
     response.headers['Cache-Control'] = "max-age=604800, private, must-revalidate"
@@ -82,10 +84,10 @@ def get_tasks():
     response = []
 
     if not tasks_data:
-        result = db.session.execute(db.select(Tasks).where(Tasks.plan_id == plan_id, Tasks.day == day)).scalars().all()
+        result = db.session.execute(db.select(Tasks).where(and_(Tasks.plan_id == plan_id, Tasks.days.any(day)))).scalars().all()
     else: 
-        tasks_completed = list(map(int, tasks_data.split("t"))) 
-        result = db.session.execute(db.select(Tasks).where(Tasks.plan_id == plan_id, Tasks.day == day, Tasks.id.notin_(tasks_completed))).scalars().all()
+        tasks_marked = list(map(int, tasks_data.split("t"))) 
+        result = db.session.execute(db.select(Tasks).where(and_(Tasks.plan_id == plan_id, Tasks.days.any(day)), Tasks.id.notin_(tasks_marked))).scalars().all()
     
     for task in result:
         response.append({

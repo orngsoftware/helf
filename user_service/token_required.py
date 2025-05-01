@@ -5,9 +5,10 @@ import os
 
 
 SECRET_KEY = os.environ.get('SECRET_KEY')
+REFRESH_SECRET = os.environ.get('REFRESH_SECRET')
 
 def token_required(f):
-    '''Decodes JWT token and passes some user data to next function.'''
+    '''Decodes JWT token and passes user id and user name to next function.'''
     @wraps(f)
     def decorated(*args, **kwargs):
         token = request.headers.get("Authorization")
@@ -20,7 +21,6 @@ def token_required(f):
         try: 
             payload = jwt.decode(token, SECRET_KEY, algorithms="HS256")
             user_id = payload["user_id"]
-            email = payload["email"]
             name = payload["name"]
         
         except jwt.ExpiredSignatureError:
@@ -31,3 +31,7 @@ def token_required(f):
         return f(user_id, name, *args, **kwargs)
 
     return decorated
+
+def decode_token(token, is_refresh=False):
+    key = REFRESH_SECRET if is_refresh else SECRET_KEY
+    return jwt.decode(token, key, algorithms="HS256")

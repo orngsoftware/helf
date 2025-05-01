@@ -5,6 +5,12 @@ const TaskReflection = (props: any) => {
     const [selected, setSelected] = useState(null)
     const [note, setNote] = useState("")
 
+    window.onkeydown = function(e) {
+        if (e.key == 'Escape') {
+            props.togglePopup()
+        }
+    }
+
     const handleChagne = (value: any) => {
         setSelected(value)
         switch (value) {
@@ -36,18 +42,22 @@ const TaskReflection = (props: any) => {
                 "Authorization": `Bearer ${localStorage.getItem("token")}`,
                 "X-CSRFToken": csrfToken
             },
-            body: JSON.stringify({"reason": selected ? selected : "Other"})
+            body: JSON.stringify({"reason": selected ? selected : "Other", "task_id": props.taskID})
         })
         const result = await response.json()
         console.log(result)
-        
+        props.togglePopup()
+        props.setTasks((prevTasks: any) => prevTasks.filter((task: any) => task.task_id !== props.taskID))
     }
 
     return (
         <div className="popup-overlay">
             <div className="white-card popup">
                 <div style={{cursor: "pointer"}} onClick={props.togglePopup} className="to-top-right"><X weight="bold" size={20} /></div>
-                <h3 className="sm-heading" style={{marginTop: "30px"}}>Why you didn't <span style={{color: "#007bff"}}>{props.taskDescription}</span>?</h3>
+                <h3 className="sm-heading" style={{marginTop: "30px"}}>Why you didn't <span style={{color: "#007bff"}}>{
+                    props.taskName.charAt(0).toLowerCase().concat(props.taskName.slice(1))}
+                    </span>
+                ?</h3>
                 <form onSubmit={handleSumbit} style={{display: "flex", flexDirection: "column", alignItems: "center"}}>
                     <div className="sm-row tr-form">
                         <label className="tr-reasons" style={{ backgroundColor: selected === "th" ? "var(--light-grey-color)" : "var(--black-color)"}}>
@@ -95,7 +105,7 @@ const Tasks = (props: any) => {
             body: JSON.stringify({"task_id": task_id})
         })
         const result = await response.json()
-        console.log(result) // here in the future something will change, like when user completes a task screen goes green.
+        console.log(result) // <---->
         if (result.streak_change == 1) {
             props.planCallback(true)
         }
@@ -104,13 +114,13 @@ const Tasks = (props: any) => {
     }
 
     return (
-        <div className="tasks-section">
+        <div className="section-column tasks-section">
             <h3 className="sm-heading">Take action today</h3>
             {tasks.length === 0 ?
-                (<p>You've completed everything for today!</p>) : (
+                (<p>No more tasks for today!</p>) : (
                 tasks.map((task: any) => (
                     <div id={`task-card${task["id"]}`} key={task["id"]} className="white-card">
-                        {isOpen && <TaskReflection togglePopup={showReflection} taskDescription={task["description"]}/>}
+                        {isOpen && <TaskReflection togglePopup={showReflection} taskName={task["name"]} setTasks={setTasks} taskID={task["task_id"]}/>}
                         <p style={{fontWeight: 550}}>{task["name"]}</p>
                         <p className="light-text">{task["description"]}</p>
                         <div className="sm-row" style={{gap: 20}}>

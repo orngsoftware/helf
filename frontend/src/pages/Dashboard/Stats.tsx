@@ -13,7 +13,7 @@ const COLORS = ["#6CB4EE","#007bff", "#00B9E8", "#318CE7", "#7BAFD4"]
 
 
 const TasksCompletionStats = () => {
-    const [barData, setBarData] = useState([{}])
+    const [barData, setBarData] = useState([{"name": "Task completetions", "Incompleted": 0, "Completed": 0}])
     const [reasonsData, setReasonsData] = useState([{}])
     const [streakData, setStreakData] = useState({
         "streak": "",
@@ -84,6 +84,17 @@ const TasksCompletionStats = () => {
     useEffect(() => {
         fetchData()
     }, [])
+
+    if (barData[0]["Incompleted"] == 0 && barData[0]["Completed"] == 0 ) {
+        return (
+            <div className="plan-section">
+                <div className="center-section">
+                    <h1>Stats are unavailable</h1>
+                    <h3>Complete some tasks and come back.</h3>
+                </div>
+            </div>
+        )
+    }
 
     return (
         <div className="plan-section" style={{marginTop: 50}}>

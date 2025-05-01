@@ -4,7 +4,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy import Integer, String, Boolean, Date, ForeignKey, ARRAY
 from flask_wtf.csrf import generate_csrf
 from werkzeug.security import generate_password_hash, check_password_hash
-from user_service.token_required import token_required
+from user_service.token_required import token_required, decode_token
 import datetime
 import jwt
 from flask_cors import CORS
@@ -14,6 +14,7 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('USER_DB_URI')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 SECRET_KEY = os.environ.get('SECRET_KEY')
+REFRESH_SECRET = os.environ.get('REFRESH_SECRET')
 app.config['SECRET_KEY'] = SECRET_KEY
 CORS(app)
 
@@ -47,7 +48,7 @@ class UserPlans(db.Model):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     plan_id: Mapped[list] = mapped_column(Integer, nullable=True)
     current_block_num: Mapped[int] = mapped_column(Integer, nullable=True) # What block user is on.
-    tasks_completed: Mapped[list] = mapped_column(ARRAY(Integer), default=[]) # What tasks user has completed for the plan.
+    tasks_saved: Mapped[list] = mapped_column(ARRAY(Integer), default=[]) # What tasks user has marked for the plan.
     start_date: Mapped[datetime.date] = mapped_column(Date, nullable=True)
 
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))
@@ -57,17 +58,23 @@ class UserPlans(db.Model):
 with app.app_context():
     db.create_all()
 
-
-def generate_jwt(user) -> str:
+def generate_jwt(user_id, user_name) -> str:
     """Generate a JWT token for a user"""
     payload = {
-        "user_id": user.id,
-        "email": user.email,
-        "name": user.name,
+        "user_id": user_id,
+        "name": user_name,
         "exp": datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=1)
     }
-    token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")
-    return token
+    return jwt.encode(payload, SECRET_KEY, algorithm="HS256")
+
+def generate_refresh_token(user) -> str:
+    """Generate a Refresh token for a user"""
+    payload = {
+        "user_id": user.id,
+        "name": user.name,
+        "exp": datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=7)
+    }
+    return jwt.encode(payload, REFRESH_SECRET, algorithm="HS256")
 
 def calculate_streak(last_completed_date, streak, longest_streak, last_streak_update) -> tuple:
     """Determines user's streak.
@@ -86,9 +93,10 @@ def calculate_streak(last_completed_date, streak, longest_streak, last_streak_up
         return (streak, longest_streak, last_streak_update, 0)
     else:
         return (0, longest_streak, last_streak_update, 0)
+
     
 # Routes
-@app.route('/get-csrf-token')
+@app.route('/get-csrf-token', methods=['GET'])
 def get_csrf_token():
     return jsonify({"csrf_token": generate_csrf()})
     
@@ -118,7 +126,7 @@ def register():
     db.session.add(new_user)
     db.session.commit()
 
-    return jsonify({"message": "Registred successfully", "token": generate_jwt(new_user)}), 201
+    return jsonify({"message": "Registred successfully", "token": generate_jwt(user_id=new_user.id, user_name=new_user.name), "refresh_token": generate_refresh_token(new_user)}), 201
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -133,10 +141,22 @@ def login():
     elif not check_password_hash(user.password, password):
         return jsonify({"message": "Password is incorrect"}), 401
     else:
-        token = generate_jwt(user)
-        return jsonify({"message": "Logged in successfully", "token": token}), 200
+        return jsonify({"message": "Logged in successfully", "token": generate_jwt(user.id, user.name), "refresh_token": generate_refresh_token(user)}), 200
+    
+@app.route('/refresh', methods=['POST'])
+def refresh_token():
+    data = request.get_json()
+    refresh_token = data.get("refresh_token")
+    try:
+        payload = decode_token(refresh_token, is_refresh=True)
+        new_jwt = generate_jwt(payload['user_id'], payload['name'])
+        return jsonify({"token": new_jwt})
+    except jwt.ExpiredSignatureError:
+        return jsonify({"message": "Refresh token expired"}), 403
+    except jwt.InvalidTokenError:
+        return jsonify({"message": "Invalid refresh token"}), 403
 
-@app.route('/user-plan')
+@app.route('/user-plan', methods=['GET'])
 @token_required
 def get_user_plan(user_id, name, *args, **kwargs):
     plan_id = request.args.get('plan_id')
@@ -148,7 +168,7 @@ def get_user_plan(user_id, name, *args, **kwargs):
     if not result: 
         return jsonify({"message": "This user doesn't have this plan"}), 404
     
-    return jsonify({"current_block_num": result.current_block_num, "tasks_completed": result.tasks_completed, "current_day": 1 if current_day == 0 else current_day, "user_name": name})
+    return jsonify({"current_block_num": result.current_block_num, "tasks_saved": result.tasks_saved, "current_day": 1 if current_day == 0 else current_day, "user_name": name})
 
 @app.route('/start-plan', methods=['POST'])
 @token_required
@@ -170,7 +190,6 @@ def start_plan(user_id, *args, **kwargs):
     db.session.commit()
 
     return jsonify({"message": "Started the plan successfully"}), 200
-    
 
 @app.route('/complete-task', methods=['POST'])
 @token_required
@@ -184,7 +203,7 @@ def complete_task(user_id, *args, **kwargs):
     if not task_id: 
         return jsonify({"message": "No task ID provided"}), 401
 
-    plan.tasks_completed = plan.tasks_completed + [task_id]
+    plan.tasks_saved = plan.tasks_saved + [task_id]
     user.num_tasks_completed += 1
 
     # Update user's streak
@@ -196,8 +215,7 @@ def complete_task(user_id, *args, **kwargs):
 
     db.session.commit()
 
-    return jsonify({"message": "Completed task and updated the streak successfully.", 
-                    "tasks_completed": plan.tasks_completed, "streak_change": updated_streak[-1]}), 200
+    return jsonify({"message": "Completed task and updated the streak successfully.", "streak_change": updated_streak[-1]}), 200
 
 @app.route('/incomplete-task', methods=['POST'])
 @token_required
@@ -205,12 +223,14 @@ def incomplete_task(user_id, *args, **kwargs):
     data = request.get_json()
     reason = data.get('reason')
     user = db.session.execute(db.select(Users).where(Users.id == user_id)).scalar()
-
     if not user:
         return jsonify({"message": "User wasn't found"}), 404
+    
+    user_plan = db.session.execute(db.select(UserPlans).where(UserPlans.user_id == user_id)).scalar()
 
     user.reasons_for_tasks_incomplete = user.reasons_for_tasks_incomplete + [reason]
     user.num_tasks_incomplete += 1
+    user_plan.tasks_saved = user_plan.tasks_saved + [data.get('task_id')]
 
     db.session.commit()
 
@@ -258,4 +278,4 @@ def get_streak(user_id, *args, **kwargs):
         "streak": user.streak,
         "longest_streak": user.longest_streak,
         "result": 1 if user.last_streak_update == todays_date else 0
-    })
+})

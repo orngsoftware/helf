@@ -1,11 +1,6 @@
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 
-export const isAuthenticated = () => {
-    const token = localStorage.getItem("token")
-    return !!token
-}
-
 const AuthForm = (props: any) => {
     const {url, formType} = props
     const navigate = useNavigate()
@@ -46,7 +41,10 @@ const AuthForm = (props: any) => {
             const result = await response.json()
 
             if (response.ok) {
+                localStorage.removeItem("token") // Remove already existing tokens in case user tries to login again.
+                localStorage.removeItem("refresh_token")
                 localStorage.setItem("token", result.token)
+                localStorage.setItem("refresh_token", result.refresh_token)
                 if (formType === "register") {
                     navigate("/start")
                 }

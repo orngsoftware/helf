@@ -292,6 +292,11 @@ h3 {
     text-align: center;
     z-index: 1000;
     max-width: 700px;
+    width: 90%;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 .popup-overlay {
@@ -302,6 +307,14 @@ h3 {
     height: 100%;
     background: rgba(0, 0, 0, 0.5);  
     z-index: 999; 
+    overflow-y: auto;
+}
+
+.reader-body {
+    margin: 0px 15px 50px 15px;
+    flex: 1;
+    overflow-y: auto;
+    padding-bottom: 1rem;
 }
 
 .tr-reasons {
@@ -344,10 +357,10 @@ h3 {
     flex-wrap: wrap;
 }
 
-.tasks-section {
+.section-column.tasks-section {
     margin-top: 75px;
     width: 90%;
-    max-width: 300px;
+    max-width: 450px;
 }
 
 .white-card.stats {
@@ -418,9 +431,10 @@ h3 {
     .plan-section {
         gap: 10px;
         padding-bottom: 120px;
+        padding: 15px;
     }
 
-    .tasks-section {
+    .section-column.tasks-section {
         margin-top: 10px;
     }
 

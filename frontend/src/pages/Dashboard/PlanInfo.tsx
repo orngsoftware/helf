@@ -24,7 +24,7 @@ const PlanInfo = (props: any) => {
         <div>
             <div className="sm-row">
                 <h2 style={{margin: 10}}>{props.planName}</h2>
-                <div className="sm-row to-right" style={{color: color.color}}>
+                <div className="sm-row to-right" style={{color: color.color, marginLeft: 35}}>
                     {color["show-icon"] ? <Lightning weight="bold" className="nav-icon"/> : <Cloud weight="bold" className="nav-icon" />}
                     <h3 className="sm-heading" style={{color: "inherit", marginLeft: 2}}>{props.userStreak}</h3>
                 </div>
