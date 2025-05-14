@@ -11,7 +11,6 @@ const Plan = () => {
 
     const [allData, setAllData] = useState({
         current_user_day: "",
-        current_user_block: "",
         user_name: "",
         user_tasks_completed: [],
         user_streak: "",
@@ -83,7 +82,7 @@ const Plan = () => {
 
         //3.Fetch Block data
         const blockAPIResponse = await fetch(
-            `http://localhost/api/plans/block-data?plan_id=${plan_id}&block_id=${userResponseData.current_block_num}`,
+            `http://localhost/api/plans/block-data?plan_id=${plan_id}&day=${userResponseData.current_day}`,
             request_data
         );
         const blockResponseData = await blockAPIResponse.json();
@@ -91,7 +90,7 @@ const Plan = () => {
         //4.Fetch Tasks data
         const tasks_query = userResponseData.tasks_saved ? `&tasks=${userResponseData.tasks_saved.join("t")}` : "";
         const tasksAPIResponse = await fetch(
-            `http://localhost/api/plans/tasks?plan_id=${plan_id}&day=1${tasks_query}`, //Change day=1 to day={user.current_day} on real data
+            `http://localhost/api/plans/tasks?plan_id=${plan_id}&day=${userResponseData.current_day}${tasks_query}`,
             {
                 headers: {
                     "Content-Type": "application/json"
@@ -102,7 +101,6 @@ const Plan = () => {
 
         return ({
             current_user_day: userResponseData.current_day,
-            current_user_block: userResponseData.current_block_num,
             user_name: userResponseData.user_name,
             user_tasks_completed: userResponseData.tasks_completed,
             user_streak: streakReponseData.streak,
@@ -126,11 +124,10 @@ const Plan = () => {
         getData()
     }, [plan_id, streakUpdated]);
 
-    if (allData.current_user_day >= allData.plan_duration) {
-        return <Finish userName={allData.user_name} />
-    }
-
-    if (allData.current_user_block) {
+    if (allData.current_user_day) {
+        if (allData.current_user_day >= allData.plan_duration) {
+            return <Finish userName={allData.user_name} />
+        }
         return (
             <div className="plan-section">
                 <div className="section-column">

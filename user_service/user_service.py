@@ -47,7 +47,6 @@ class UserPlans(db.Model):
     __tablename__="user_plans"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     plan_id: Mapped[list] = mapped_column(Integer, nullable=True)
-    current_block_num: Mapped[int] = mapped_column(Integer, nullable=True) # What block user is on.
     tasks_saved: Mapped[list] = mapped_column(ARRAY(Integer), default=[]) # What tasks user has marked for the plan.
     start_date: Mapped[datetime.date] = mapped_column(Date, nullable=True)
 
@@ -168,7 +167,7 @@ def get_user_plan(user_id, name, *args, **kwargs):
     if not result: 
         return jsonify({"message": "This user doesn't have this plan"}), 404
     
-    return jsonify({"current_block_num": result.current_block_num, "tasks_saved": result.tasks_saved, "current_day": 1 if current_day == 0 else current_day, "user_name": name})
+    return jsonify({"tasks_saved": result.tasks_saved if result.tasks_saved else None, "current_day": 1 if current_day == 0 else current_day, "user_name": name})
 
 @app.route('/start-plan', methods=['POST'])
 @token_required
@@ -181,7 +180,6 @@ def start_plan(user_id, *args, **kwargs):
 
     new_user_plan = UserPlans(
         plan_id = plan_id,
-        current_block_num = 1,
         start_date = todays_date,
         user_id = user_id
     )

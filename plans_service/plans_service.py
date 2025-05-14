@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, request, make_response
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase, mapped_column, Mapped, relationship
-from sqlalchemy import ForeignKey, String, Integer, Text, ARRAY, and_
+from sqlalchemy import ForeignKey, String, Integer, Text, desc, and_
 from flask_cors import CORS
 from user_service.token_required import token_required
 import os
@@ -34,7 +34,7 @@ class Blocks(db.Model):
 
     plan_id: Mapped[int] = mapped_column(Integer, ForeignKey("plans.id"))
     plan = relationship("Plans", back_populates="blocks")
-    day: Mapped[int] = mapped_column(Integer)
+    day: Mapped[int] = mapped_column(Integer) # Day when the block starts.
 
     name: Mapped[str] = mapped_column(String, nullable=False)
     tldr_info: Mapped[str] = mapped_column(Text, nullable=False)
@@ -46,8 +46,7 @@ class Tasks(db.Model):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     action_name: Mapped[str] = mapped_column(String, nullable=False)
     description: Mapped[str] = mapped_column(String)
-    days: Mapped[list] = mapped_column(ARRAY(Integer), default=[])
-    difficulty: Mapped[int] = mapped_column(Integer)
+    day: Mapped[int] = mapped_column(Integer, default=0)
 
     plan_id: Mapped[int] = mapped_column(Integer, ForeignKey("plans.id"))
     plan = relationship("Plans", back_populates="tasks")
@@ -60,9 +59,12 @@ with app.app_context():
 @token_required
 def get_block_data(*args, **kwargs):
     plan_id = request.args.get('plan_id')
-    block_id = request.args.get('block_id')
+    day_id = request.args.get('day')
 
-    result = db.session.execute(db.select(Blocks).where(Blocks.plan_id == plan_id, Blocks.id == block_id)).scalars().first()
+    result = db.session.execute(
+        db.select(Blocks)
+        .where(Blocks.day <= day_id, Blocks.plan_id == plan_id)
+        .order_by(desc(Blocks.id))).scalars().first()
     
     if not result: return jsonify({"message": "Block not found"}), 404
 
@@ -72,7 +74,7 @@ def get_block_data(*args, **kwargs):
         "body_info": markdown(result.body_info),
         "time_info": result.time_info
     }), 200)
-    response.headers['Cache-Control'] = "max-age=604800, private, must-revalidate"
+    response.headers['Cache-Control'] = "max-age=86400, private, must-revalidate"
 
     return response
 
@@ -84,10 +86,12 @@ def get_tasks():
     response = []
 
     if not tasks_data:
-        result = db.session.execute(db.select(Tasks).where(and_(Tasks.plan_id == plan_id, Tasks.days.any(day)))).scalars().all()
+        result = db.session.execute(db.select(Tasks).where(Tasks.plan_id == plan_id, Tasks.day == day)).scalars().all()
     else: 
-        tasks_marked = list(map(int, tasks_data.split("t"))) 
-        result = db.session.execute(db.select(Tasks).where(and_(Tasks.plan_id == plan_id, Tasks.days.any(day)), Tasks.id.notin_(tasks_marked))).scalars().all()
+        tasks_saved= list(map(int, tasks_data.split("t"))) 
+        result = db.session.execute(
+            db.select(Tasks).where(
+                and_(Tasks.plan_id == plan_id, Tasks.day == day, Tasks.id.notin_(tasks_saved)))).scalars().all()
     
     for task in result:
         response.append({
