@@ -367,6 +367,18 @@ h3 {
     width: 400px;
 }
 
+.home-image {
+    background-color: var(--grey-color);
+    width: 100%;
+    margin-top: 25px;
+}
+
+.footer {
+    width: 100%;
+    background-color: var(--grey-color);
+    height: 300px;
+}
+
 @media (max-width: 768px) {
     .nav-links {
         display: none;
