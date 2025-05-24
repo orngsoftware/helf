@@ -91,10 +91,17 @@ const TaskReflection = (props: any) => {
 const Tasks = (props: any) => {
     const [tasks, setTasks] = useState(props.tasks)
     const [isOpen, setOpen] = useState(false)
+    const [selectedTask, setSelectedTask] = useState({"name": "", "task_id": 0})
 
-    const showReflection = () => {
-        setOpen(!isOpen)
+    const showReflection = (task_name: string, task_id: number) => {
+        setSelectedTask({"name": task_name, "task_id": task_id})
+        setOpen(true)
     }
+
+    const closeRefleciton = () => {
+        setOpen(false)
+    }
+
     async function completeTask(task_id: any, plan_id: any) {
         const response = await fetch(`http://localhost/api/users/complete-task?plan_id=${plan_id}`, {
             method: "POST",
@@ -120,16 +127,16 @@ const Tasks = (props: any) => {
                 (<p>No more tasks for today!</p>) : (
                 tasks.map((task: any) => (
                     <div id={`task-card${task["id"]}`} key={task["id"]} className="white-card">
-                        {isOpen && <TaskReflection togglePopup={showReflection} taskName={task["name"]} setTasks={setTasks} taskID={task["task_id"]}/>}
                         <p style={{fontWeight: 550}}>{task["name"]}</p>
                         <p className="light-text">{task["description"]}</p>
                         <div className="sm-row" style={{gap: 20}}>
                             <div style={{cursor: "pointer"}}onClick={() => completeTask(task["task_id"], props.planID)}><Check weight="bold" size={20} color="#9DF53A" /></div>
-                            <div style={{cursor: "pointer"}} onClick={showReflection}><X weight="bold" size={20} color="red" /></div>
+                            <div style={{cursor: "pointer"}} onClick={() => showReflection(task["name"], task["task_id"])}><X weight="bold" size={20} color="red" /></div>
                         </div>
                     </div>
                 ))
             )}
+            {isOpen && <TaskReflection togglePopup={closeRefleciton} taskName={selectedTask["name"]} setTasks={setTasks} taskID={selectedTask["task_id"]}/>}
         </div>
     )
 }

@@ -9,7 +9,6 @@ const LandingLayout = () => {
         <>
             {!hideNavbarRoutes.includes(location.pathname) && <NavbarHoriz />}
             <Outlet />
-            <div className="footer"></div>
         </>
     )
 }
