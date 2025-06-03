@@ -18,6 +18,7 @@ html {
 
 p {
     margin: 5px;
+    line-height: 1.5;
 }
 
 a {
@@ -379,6 +380,14 @@ h3 {
     height: 300px;
 }
 
+.white-card.princ {
+    max-width: 200px;
+}
+
+.plan-section.finish {
+    margin: 0px 20px 50px 25px;
+}
+
 @media (max-width: 768px) {
     .nav-links {
         display: none;
@@ -446,11 +455,19 @@ h3 {
         margin-bottom: 120px;
     }
 
+    .plan-section.finish {
+        margin: 0px 0px 100px 0px;
+    }
+
     .section-column.tasks-section {
         margin-top: 10px;
     }
 
     .white-card.stats {
         width: 85%;
+    }
+
+    .white-card.princ {
+        max-width: 100%;
     }
 }
