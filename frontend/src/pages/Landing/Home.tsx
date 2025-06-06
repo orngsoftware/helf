@@ -1,10 +1,19 @@
+import { Link } from "react-router-dom";
+
 const Home = () => {
     return (
         <div className='center-section'>
             <h1>Do you want to improve your health?</h1>
-            <h3>Improve your nutrition, fitness and sleep <span style={{fontWeight: "bold"}}>simpler with actionable plans</span> and learnings.</h3>
-            <div className="home-image">
-                <img src="/src/assets/1_completed_streak_task_demo.png" alt="Demo Dashboard" style={{maxHeight: "750px", borderRadius: 25}}/>
+            <h3>Improve your <span style={{fontWeight: "bold"}}>nutrition simpler</span> with actionable plan.</h3>
+            <img className="demo-desk-img" alt="Dashboard Demo Image" src="src/assets/demo_dashboard.jpeg"/>
+            <img className="demo-mobile-img" alt="Dashboard Demo Image" src="src/assets/demo_mobile.jpeg" />
+            <div className="sm-row" style={{gap: 10, marginTop: 25}}>
+                <Link to="/sign-up">
+                    <button className="btn-primary">Take action</button>
+                </Link>
+                <Link target="_blank" to="https://www.instagram.com/helfy.space/">
+                    <button className="btn-primary outline">No, thanks</button>
+                </Link>
             </div>
         </div>
     )

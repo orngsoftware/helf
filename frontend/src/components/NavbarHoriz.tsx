@@ -25,7 +25,7 @@ const NavbarHoriz = () => {
                 <Link to="/" className="rm-on-sm-screen"><img className="logo-img" src="./src/assets/logowithname.png" alt="Helf Logo"></img></Link>
                 <ul className={`nav-links ${menuOpen ? "opened" : ""}`}>
                     <li><Link to="/">Home</Link></li>
-                    <li>Products</li>
+                    <li><Link to="/products">Products</Link></li>
                     <li><Link to="/about">About</Link></li>
                 </ul>
                 <div className="sign-up-link">

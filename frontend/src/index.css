@@ -18,7 +18,7 @@ html {
 
 p {
     margin: 5px;
-    line-height: 1.5;
+    line-height: 25px;
 }
 
 a {
@@ -368,24 +368,26 @@ h3 {
     width: 400px;
 }
 
-.home-image {
-    background-color: var(--grey-color);
-    width: 100%;
-    margin-top: 25px;
-}
-
-.footer {
-    width: 100%;
-    background-color: var(--grey-color);
-    height: 300px;
-}
-
 .white-card.princ {
-    max-width: 200px;
+    max-width: 300px;
+    height: 200px;
 }
 
 .plan-section.finish {
-    margin: 0px 20px 50px 25px;
+    margin: 0px 20px 20px 20px;
+}
+
+.demo-desk-img {
+    width: 100%;
+    max-width: 1000px;
+    height: auto;
+    margin-top: 45px;
+    border: 2px solid var(--grey-color);
+    border-radius: 25px;
+}
+
+.demo-mobile-img {
+    display: none;
 }
 
 @media (max-width: 768px) {
@@ -469,5 +471,17 @@ h3 {
 
     .white-card.princ {
         max-width: 100%;
+    }
+
+    .demo-desk-img {
+        display: none;
+    }
+
+    .demo-mobile-img {
+        display: block;
+        width: 90%;
+        margin-top: 45px;
+        border: 2px solid var(--grey-color);
+        border-radius: 25px;
     }
 }
