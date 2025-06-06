@@ -61,7 +61,7 @@ const AuthForm = (props: any) => {
     }
     return (
         <div className="center-section">
-            <Link to="/" style={{alignSelf: "flex-start", marginLeft: "75px"}}><img className="logo-img" src="./src/assets/logowithname.png" alt="Helf Logo"></img></Link>
+            <Link to="/" style={{alignSelf: "flex-start", marginLeft: "75px"}}><img className="logo-img auth-logo" src="./src/assets/logowithname.png" alt="Helf Logo"></img></Link>
             <h1>{formType === "register" ? "Welcome to Helf": "Welcome back"}</h1>
             <form onSubmit={handleSumbit} className="auth-form" autoComplete="off">
                 {formType === "register" && (

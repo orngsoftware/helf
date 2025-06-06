@@ -32,9 +32,9 @@ const StartPlan = () => {
                     <div className="sm-col" style={{margin: 10}}>
                         <h3 className="sm-heading" style={{margin: 0}}>No diets, no bullsh*t</h3>
                         <p className="light-text" style={{marginLeft: 0, marginTop: 10}}>Improve your nutrition simpler.</p>
-                        <div className="sm-row sd-item" style={{marginTop: 15}}>
+                        <div className="sm-row" style={{marginTop: 15}}>
                             <Clock size={18} weight="bold"/>
-                            <p><span style={{fontWeight: "bold"}}>Duration:</span> X days</p>
+                            <p><span style={{fontWeight: "bold"}}>Duration:</span> 17 days</p>
                         </div>
                     </div>
                 </div>

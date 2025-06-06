@@ -180,7 +180,7 @@ def start_plan(user_id, *args, **kwargs):
 
     new_user_plan = UserPlans(
         plan_id = plan_id,
-        start_date = todays_date,
+        start_date = todays_date - datetime.timedelta(days=1),
         user_id = user_id
     )
 
@@ -269,11 +269,16 @@ def get_streak(user_id, *args, **kwargs):
     user = db.session.execute(db.select(Users).where(Users.id == user_id)).scalar()
     if not user:
         return jsonify({"message": "User wasn't found"}), 404
+    
+    streak = calculate_streak(user.last_completed_date, user.streak, user.longest_streak, user.last_streak_update)
+    user.streak = streak[0]
+    user.longest_streak = streak[1]
+    user.last_streak_update = streak[2]
 
     db.session.commit()
-
+    
     return jsonify({
-        "streak": user.streak,
-        "longest_streak": user.longest_streak,
-        "result": 1 if user.last_streak_update == todays_date else 0
+        "streak": streak[0],
+        "longest_streak": streak[1],
+        "result": streak[-1]
 })

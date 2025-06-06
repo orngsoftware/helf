@@ -10,6 +10,8 @@ import Plan from './pages/Dashboard/Plan';
 import StartPlan from './pages/Dashboard/Start';
 import BarTasksCompletion from './pages/Dashboard/Stats';
 import ProductPage from './pages/Landing/Products';
+import PrivacyPolicy from './pages/Landing/PrivacyPolicy';
+import TermsOfService from './pages/Landing/TermsOfService';
 
 const AppRoutes = () => {
     return (
@@ -20,6 +22,8 @@ const AppRoutes = () => {
                 <Route path="/sign-up" element={<SignUpForm />} />
                 <Route path="/log-in" element={<LoginForm />} />
                 <Route path="/products" element={<ProductPage />} />
+                <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                <Route path="/terms-of-service" element={<TermsOfService />} />
             </Route>
 
             <Route element={<DashboardLayout />} >
