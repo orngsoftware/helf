@@ -41,11 +41,11 @@ const Plan = () => {
 
         //1.Fetch User data
         const userAPIResponse = await fetch(
-            `http://localhost/api/users/user-plan?plan_id=${plan_id}`,
+            `/api/users/user-plan?plan_id=${plan_id}`,
             request_data
         );
         const streakAPIReposnse = await fetch(
-            'http://localhost/api/users/stats/streak',
+            '/api/users/stats/streak',
             request_data 
         )
         const streakReponseData = await streakAPIReposnse.json();
@@ -55,7 +55,7 @@ const Plan = () => {
         if (userAPIResponse.status == 401) {
             localStorage.removeItem("token")
             const refreshAPIResponse = await fetch(
-                'http://localhost/api/users/refresh',
+                '/api/users/refresh',
                 {
                     method: "POST",
                     headers: {
@@ -76,13 +76,13 @@ const Plan = () => {
 
         //2.Fetch Plan data
         const planAPIResponse = await fetch(
-            `http://localhost/api/plans?plan_id=${plan_id}`
+            `/api/plans?plan_id=${plan_id}`
         );
         const planResponseData = await planAPIResponse.json();
 
         //3.Fetch Block data
         const blockAPIResponse = await fetch(
-            `http://localhost/api/plans/block-data?plan_id=${plan_id}&day=${userResponseData.current_day}`,
+            `/api/plans/block-data?plan_id=${plan_id}&day=${userResponseData.current_day}`,
             request_data
         );
         const blockResponseData = await blockAPIResponse.json();
@@ -90,7 +90,7 @@ const Plan = () => {
         //4.Fetch Tasks data
         const tasks_query = userResponseData.tasks_saved ? `&tasks=${userResponseData.tasks_saved.join("t")}` : "";
         const tasksAPIResponse = await fetch(
-            `http://localhost/api/plans/tasks?plan_id=${plan_id}&day=${userResponseData.current_day}${tasks_query}`,
+            `/api/plans/tasks?plan_id=${plan_id}&day=${userResponseData.current_day}${tasks_query}`,
             {
                 headers: {
                     "Content-Type": "application/json"

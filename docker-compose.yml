@@ -22,6 +22,8 @@ services:
       - .:/app
     environment:
       - USER_DB_URI=${USER_DB_URI}
+      - SECRET_KEY=${SECRET_KEY}
+      - REFRESH_KEY=${REFRESH_KEY}
     depends_on:
       - users_db
     networks:

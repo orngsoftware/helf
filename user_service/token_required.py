@@ -4,8 +4,8 @@ from functools import wraps
 import os
 
 
-SECRET_KEY = os.environ.get('SECRET_KEY')
-REFRESH_SECRET = os.environ.get('REFRESH_SECRET')
+SECRET_KEY = str(os.environ.get('SECRET_KEY'))
+REFRESH_SECRET = str(os.environ.get('REFRESH_SECRET'))
 
 def token_required(f):
     '''Decodes JWT token and passes user id and user name to next function.'''

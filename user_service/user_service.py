@@ -13,8 +13,8 @@ import os
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('USER_DB_URI')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-SECRET_KEY = os.environ.get('SECRET_KEY')
-REFRESH_SECRET = os.environ.get('REFRESH_SECRET')
+SECRET_KEY = str(os.environ.get('SECRET_KEY'))
+REFRESH_SECRET = str(os.environ.get('REFRESH_SECRET'))
 app.config['SECRET_KEY'] = SECRET_KEY
 CORS(app)
 
@@ -145,7 +145,7 @@ def login():
 @app.route('/refresh', methods=['POST'])
 def refresh_token():
     data = request.get_json()
-    refresh_token = data.get("refresh_token")
+    refresh_token = str(data.get("refresh_token"))
     try:
         payload = decode_token(refresh_token, is_refresh=True)
         new_jwt = generate_jwt(payload['user_id'], payload['name'])
